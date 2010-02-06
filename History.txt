@@ -223,11 +223,26 @@ the source key.
 === 1.10.0
 
   Release Notes:
+
+  The big new features are SDB's SQL-like query and query_with_attributes
+  support as well as signature v2 support for all services.  There are also
+  numerous bug fixes, many of them reported and patched by users and
+  customers.
+
   - AwsBase: signature v2 support added
+  - AwsBase: fix the regex matching for xmlpath which didn't work in Ruby
+    1.8.7 (thanks to a customer report)
   - Ec2: describe_availability_zones improved to support regions
+  - Ec2: Disabled retries when EC2 returns "ServiceUnavailable: Request limit
+    exceeded"
+  - Ec2: Use POST for large queries; this avoids truncation of large user data
+    when launching instances (thanks to Bob for the report)
   - CloudFront: docs fixes
   - SDB: added: SQL-like query, select and query_with_attributes support
   - SDB: fixed no method error when searching for id that doesn't exist
+    (thanks to multiple users for reporting this)
+  - S3: Fixed overzealous URL-encoding when generating URLs for S3 keys
+    (thanks to a bug report on the RubyForge forum)
   
 === 1.11.0
 
