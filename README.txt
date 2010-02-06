@@ -38,7 +38,7 @@ The RightScale AWS gems comprise:
   AWS accounts.
 - Support for both first- and second-generation SQS (API versions 2007-05-01
   and 2008-01-01).  These versions of SQS are not compatible.
-- Support for signature versions 0 and 1 on SQS, SDB, and EC2.
+- Support for signature versions 0, 1 and 2 on all services.
 - Interoperability with any cloud running Eucalyptus (http://eucalyptus.cs.ucsb.edu)
 - Test suite (requires AWS account to do "live" testing).
 
@@ -119,7 +119,9 @@ multithreaded mode.
   'incompatible Net::HTTP monkey-patch'
 
   This is due to a conflict between the right_http_connection gem and another
-  gem required by attachment_fu.
+  gem required by attachment_fu.  It may be possible to require right_aws (and
+  thus right_http_connection) in the .after_initialize method of the config object in
+  environment.rb (check the docs for Rails::Configuration.after_initialize).
 
 - 8/07: Amazon has changed the semantics of the SQS service.  A
   new queue may not be created within 60 seconds of the destruction of any
@@ -142,7 +144,7 @@ sudo gem install right_aws
 
 == LICENSE:
 
-Copyright (c) 2007-2008 RightScale, Inc. 
+Copyright (c) 2007-2009 RightScale, Inc. 
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the

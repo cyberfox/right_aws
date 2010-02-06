@@ -23,7 +23,7 @@
 
 # Test
 module RightAws
-  require 'md5'
+  require 'digest/md5'
   require 'pp'
   
   class AwsUtils #:nodoc:
@@ -671,8 +671,9 @@ module RightAws
       @xmlpath += @xmlpath.empty? ? name : "/#{name}"
     end
     def tag_end(name)
-      @xmlpath[/^(.*?)\/?#{name}$/]
-      @xmlpath = $1
+      if @xmlpath =~ /^(.*?)\/?#{name}$/
+        @xmlpath = $1
+      end
       tagend(name)
     end
     def text(text)

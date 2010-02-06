@@ -122,6 +122,12 @@ module RightAws
            aws_access_key_id    || ENV['AWS_ACCESS_KEY_ID'] , 
            aws_secret_access_key|| ENV['AWS_SECRET_ACCESS_KEY'],
            params)
+      # EC2 doesn't really define any transient errors to retry, and in fact,
+      # when they return a 503 it is usually for 'request limit exceeded' which
+      # we most certainly should not retry.  So let's pare down the list of
+      # retryable errors to InternalError only (see RightAwsBase for the default
+      # list)
+      amazon_problems = ['InternalError']
     end
 
 
@@ -131,7 +137,19 @@ module RightAws
                       "Version"        => @@api }
       service_hash.update(params)
       service_params = signed_service_params(@aws_secret_access_key, service_hash, :get, @params[:server], @params[:service])
-      request        = Net::HTTP::Get.new("#{@params[:service]}?#{service_params}")
+      
+      # use POST method if the length of the query string is too large
+      if service_params.size > 2000
+        if signature_version == '2'
+          # resign the request because HTTP verb is included into signature
+          service_params = signed_service_params(@aws_secret_access_key, service_hash, :post, @params[:server], @params[:service])
+        end
+        request      = Net::HTTP::Post.new(service)
+        request.body = service_params
+        request['Content-Type'] = 'application/x-www-form-urlencoded'
+      else
+        request        = Net::HTTP::Get.new("#{@params[:service]}?#{service_params}")
+      end
         # prepare output hash
       { :request  => request, 
         :server   => @params[:server],
@@ -515,7 +533,7 @@ module RightAws
           # Amazon 169.254.169.254 does not like escaped symbols!
           # And it doesn't like "\n" inside of encoded string! Grrr....
           # Otherwise, some of UserData symbols will be lost...
-        params['UserData'] = Base64.encode64(lparams[:user_data]).delete("\n") unless lparams[:user_data].blank?
+        params['UserData'] = Base64.encode64(lparams[:user_data]).delete("\n").strip unless lparams[:user_data].blank?
       end
       link = generate_request("RunInstances", params)
         #debugger

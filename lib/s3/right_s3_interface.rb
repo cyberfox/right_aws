@@ -80,7 +80,7 @@ module RightAws
       s3_headers = {}
       headers.each do |key, value|
         key = key.downcase
-        s3_headers[key] = value.to_s.strip if key[/^#{AMAZON_HEADER_PREFIX}|^content-md5$|^content-type$|^date$/o]
+        s3_headers[key] = value.join("").strip if key[/^#{AMAZON_HEADER_PREFIX}|^content-md5$|^content-type$|^date$/o]
       end
       s3_headers['content-type'] ||= ''
       s3_headers['content-md5']  ||= ''
@@ -119,15 +119,7 @@ module RightAws
       # extract bucket name and check it's dns compartibility
       headers[:url].to_s[%r{^([a-z0-9._-]*)(/[^?]*)?(\?.+)?}i]
       bucket_name, key_path, params_list = $1, $2, $3
-      # select request model
-      if is_dns_bucket?(bucket_name)
-        # fix a path
-        server = "#{bucket_name}.#{server}"
-        key_path ||= '/'
-        path = "#{service}#{key_path}#{params_list}"
-      else
-        path = "#{service}/#{bucket_name}#{key_path}#{params_list}"
-      end
+      path = "#{service}/#{bucket_name}#{key_path}#{params_list}"
       path_to_sign = "#{service}/#{bucket_name}#{key_path}#{params_list}"
 #      path_to_sign = "/#{bucket_name}#{key_path}#{params_list}"
       [ server, path, path_to_sign ]
@@ -880,7 +872,7 @@ module RightAws
       #  s3.put_link('my_awesome_bucket',key, object) #=> url string
       #
     def put_link(bucket, key, data=nil, expires=nil, headers={})
-      generate_link('PUT', headers.merge(:url=>"#{bucket}/#{CGI::escape key}", :data=>data), expires)
+      generate_link('PUT', headers.merge(:url=>"#{bucket}/#{AwsUtils::URLencode key}", :data=>data), expires)
     rescue
       on_exception
     end
@@ -898,7 +890,7 @@ module RightAws
       #
       # see http://docs.amazonwebservices.com/AmazonS3/2006-03-01/VirtualHosting.html
     def get_link(bucket, key, expires=nil, headers={})
-      generate_link('GET', headers.merge(:url=>"#{bucket}/#{CGI::escape key}"), expires)
+      generate_link('GET', headers.merge(:url=>"#{bucket}/#{AwsUtils::URLencode key}"), expires)
     rescue
       on_exception
     end
@@ -908,7 +900,7 @@ module RightAws
       #  s3.head_link('my_awesome_bucket',key) #=> url string
       #
     def head_link(bucket, key, expires=nil,  headers={})
-      generate_link('HEAD', headers.merge(:url=>"#{bucket}/#{CGI::escape key}"), expires)
+      generate_link('HEAD', headers.merge(:url=>"#{bucket}/#{AwsUtils::URLencode key}"), expires)
     rescue
       on_exception
     end
@@ -918,7 +910,7 @@ module RightAws
       #  s3.delete_link('my_awesome_bucket',key) #=> url string
       #
     def delete_link(bucket, key, expires=nil, headers={})
-      generate_link('DELETE', headers.merge(:url=>"#{bucket}/#{CGI::escape key}"), expires)
+      generate_link('DELETE', headers.merge(:url=>"#{bucket}/#{AwsUtils::URLencode key}"), expires)
     rescue
       on_exception
     end
@@ -929,7 +921,7 @@ module RightAws
       #  s3.get_acl_link('my_awesome_bucket',key) #=> url string
       #
     def get_acl_link(bucket, key='', headers={})
-      return generate_link('GET', headers.merge(:url=>"#{bucket}/#{CGI::escape key}?acl"))
+      return generate_link('GET', headers.merge(:url=>"#{bucket}/#{AwsUtils::URLencode key}?acl"))
     rescue
       on_exception
     end
@@ -939,7 +931,7 @@ module RightAws
       #  s3.put_acl_link('my_awesome_bucket',key) #=> url string
       #
     def put_acl_link(bucket, key='', headers={})
-      return generate_link('PUT', headers.merge(:url=>"#{bucket}/#{CGI::escape key}?acl"))
+      return generate_link('PUT', headers.merge(:url=>"#{bucket}/#{AwsUtils::URLencode key}?acl"))
     rescue
       on_exception
     end
@@ -1130,8 +1122,8 @@ module RightAws
       end
       def tagend(name)
         case name
-        when 'LastModified' : @result[:last_modified] = @text
-        when 'ETag'         : @result[:e_tag]         = @text
+        when 'LastModified' then @result[:last_modified] = @text
+        when 'ETag'         then @result[:e_tag]         = @text
         end
       end
     end
